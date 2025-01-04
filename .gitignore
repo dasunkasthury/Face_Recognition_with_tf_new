@@ -1,1 +1,5 @@
-data/FER2013/test/angry/PrivateTest_88305.jpg
+*.jpg
+*.zip
+*.h5
+data/*
+my_env/*
