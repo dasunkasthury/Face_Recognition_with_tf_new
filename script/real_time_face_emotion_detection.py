@@ -16,7 +16,7 @@ facetracker = tf.keras.models.load_model('trained_model/facetracker_largedata_40
 # faceEmotionTracker = tf.keras.models.load_model('trained_model/face_emotion_tracker_FER2013_50E.h5') # cahnge the model here 
 # faceEmotionTracker = tf.keras.models.load_model('trained_model/face_emotion_tracker_8E.h5') # cahnge the model here 
 # faceEmotionTracker = tf.keras.models.load_model('trained_model/With_weights/face_emotion_tracker_with_weight.h5') # cahnge the model here 
-faceEmotionTracker = tf.keras.models.load_model('trained_model/New_model_1/face_recognition_model_5_17E_128BS_1500SPE_200VS_0.62A.h5') 
+faceEmotionTracker = tf.keras.models.load_model('trained_model/face_recognition_model_5_17E_128BS_1500SPE_200VS_0.62A.h5') 
 
 current_prediction = ''
 previous_prediction = ''
@@ -36,52 +36,21 @@ def prediction_emotion(prediction):
   else:
     raise IndexError("Prediction index out of range.")
   
-
-# def update_variable_if_unchanged(variable, new_value, check_interval=1, duration=10):
-#   start_time = time.time()
-#   last_value = variable
-
-#   while True:
-#       time.sleep(check_interval)
-#       current_time = time.time()
-
-#       if last_value == variable:
-#           if current_time - start_time >= duration:
-#               print(f"Variable unchanged for {duration} seconds. Updating value.")
-#               variable = new_value
-#               updateDb("mood", new_value)
-#               break
-#       else:
-#           # Reset the timer if the variable changes
-#           start_time = current_time
-#           last_value = variable
-
-#   return variable
-
-
 while cap.isOpened():
     _ , frame = cap.read()
-
     frame = frame[50:500, 50:500,:]
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     
-    # print("Original shape of rgb:", rgb.shape)
     resized = tf.image.resize(rgb, (120,120))
     
     yhat_face_frame = facetracker.predict(np.expand_dims(resized/255,0))
-
     sample_coords = yhat_face_frame[1][0]
-    
-    # print('emotion ----------------------------------> ', final_prediction, "\n")
-    # print('Sampe coords ===================> ', sample_coords)
 
     rio_coordinates = np.array(sample_coords)
     scaled_roi_coordinates = rio_coordinates * 450
 
     x_start, y_start = map(int, scaled_roi_coordinates[:2])
     x_end, y_end = map(int, scaled_roi_coordinates[2:])
-
-    # print("predicted x1, y1, x2, y2", x_start, y_start, x_end, y_end)
 
     if (x_start > 0 and y_start > 0 and x_end > 0 and y_end > 0):
       roi_face_region = frame[y_start:y_end, x_start:x_end]
@@ -91,30 +60,10 @@ while cap.isOpened():
     # prediction of the facial emotion ------------------------------------------------------------
     gray_image = tf.image.rgb_to_grayscale(roi_face_region)
     gray_frame = cv2.cvtColor(roi_face_region, cv2.COLOR_BGR2GRAY)
-
-    # print("Original shape of gray_image:", gray_image.shape)
-    # print("Original shape of gray_frame:", gray_frame.shape)
-    # print("Original shape of frame:", frame.shape)
-
-    # resized_gray = tf.image.resize(gray_image, (48,48)) # change the trained model input image size to match
     resized_gray = tf.image.resize(gray_image, (48,48)) # change the trained model input image size to match
-
     yhat_emotion = faceEmotionTracker.predict(np.expand_dims(resized_gray/255,0))
-
     predictedEmotion = np.argmax(yhat_emotion)
-
     current_prediction = prediction_emotion(predictedEmotion)
-
-    # if not current_prediction == previous_prediction:
-    #   # update_variable_if_unchanged(current_prediction, previous_prediction)
-    #   updateDb("mood", current_prediction)
-    #   # Update DB
-    #   # if current_prediction == "happy":
-    #   #   updateDb("bright", 255)
-    #   # else:
-    #   #   updateDb("bright", 0)
-    #   previous_prediction = current_prediction
-
     if current_prediction == stable_mood:
         if time.time() - last_update_time >= mood_check_duration:
             updateDb("mood", current_prediction)

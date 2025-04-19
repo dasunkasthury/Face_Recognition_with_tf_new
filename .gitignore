@@ -4,3 +4,10 @@
 data/*
 my_env/*
 *.keras
+*.deb
+firebase_DB_Access/esp32-home-932a5-firebase-adminsdk-jb9t9-1416018ba6.json.rej
+logs/
+*.pyc
+script/credentials.json
+script/DB_helper/credentials1.json.rej
+*.pt
